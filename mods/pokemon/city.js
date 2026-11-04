@@ -1,5 +1,5 @@
 // The scene: the current space's Sinnoh location (a Platinum overworld map, 1 map px = 1 logical px) with the
-// space's agents standing in it as Pokémon. Resting agents nap with a "zz", working ones hum with music notes,
+// space's agents standing in it as Pokémon. Resting agents nap under drifting Zs, working ones hum with music notes,
 // done ones cheer with a "!!", blocked ones wave with a "?". Click a Pokémon to focus its pane.
 import { div, image } from "gpui-kit";
 import { spaces, agents, setAgentOrder, run, props } from "herdr";
@@ -11,9 +11,11 @@ const H = M.canvas.h;
 const SP = M.sprite;
 const MOVE = 500;
 const POSE = { idle: "idle", working: "smash", done: "roar", blocked: "wave" };
-const BUBBLE = { idle: "zz", done: "bang", blocked: "question" };
+const BUBBLE = { done: "bang", blocked: "question" };
 // music notes over a working Pokémon: [effect, x offset from the feet centre, how far it floats up, period ms]
 const NOTES = [["note1", -22, 8, 1500], ["note2", -4, 10, 1900], ["note3", 14, 7, 1700]];
+// Zs over a sleeping one: slower, drifting up and right as they fade
+const ZS = [["z1", 8, 0, 10, 2600], ["z2", 18, -10, 8, 3200]];   // [effect, dx, dy, rise, period]
 
 const fx = (t, name) => {
   const [w, h] = M.fxSize[name];
@@ -43,6 +45,16 @@ function monster(t, a, mid, x, y) {
   if (b) {
     const [, bh] = M.fxSize[b];
     el.child(div().absolute().left(SP.ax + 14).top(m.top - bh - 2).child(fx(t, b)));
+  }
+  if (a.status === "idle") {
+    ZS.forEach(([name, dx, dy, rise, period], k) => {
+      const [, zh] = M.fxSize[name];
+      el.child(div().absolute().left(SP.ax + dx).top(m.top - zh - 2 + dy)
+        .child(div().id(`z-${a.address}-${k}`).absolute().left(0).top(0)
+          .loop("top", { from: 0, to: -rise, period })
+          .loop("opacity", { from: 1, to: 0.15, period })
+          .child(fx(t, name))));
+    });
   }
   if (a.status === "working") {
     NOTES.forEach(([name, dx, rise, period], k) => {

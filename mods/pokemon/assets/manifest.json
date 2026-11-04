@@ -3781,7 +3781,8 @@
  "fx": {
   "bang": "fx/bang.png",
   "question": "fx/question.png",
-  "zz": "fx/zz.png",
+  "z1": "fx/z1.png",
+  "z2": "fx/z2.png",
   "siren": "fx/siren.png",
   "brick": "fx/brick.png",
   "note1": "fx/note1.png",
@@ -3798,9 +3799,13 @@
    14,
    13
   ],
-  "zz": [
-   14,
+  "z1": [
+   8,
    7
+  ],
+  "z2": [
+   6,
+   5
   ],
   "siren": [
    6,

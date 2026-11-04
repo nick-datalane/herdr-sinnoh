@@ -178,14 +178,21 @@ KWWWWWWWWWWWK
 .KKKKWWKKKKK.
 ....KWK......
 ....KK.......""", {"K": "#2b2620", "W": "#ffffff", "B": "#2f6fe0"}),
-    "zz": ("""
-KKKKKK.......
-KZZZZK.......
-KKKZZK.KKKKK.
-.KZZKK.KzzzK.
-KZZKKK.KKzKK.
-KZZZZK.KzzzK.
-KKKKKK.KKKKK.""", {"K": "#2b3a55", "Z": "#9cc7ff", "z": "#c9e0ff"}),
+    # sleeping: a big Z and a small z that drift up over a resting Pokémon
+    "z1": ("""
+KKKKKKK
+KZZZZZK
+KKKKZZK
+..KZZK.
+.KZZK..
+KZZZZZK
+KKKKKKK""", {"K": "#2b3a55", "Z": "#9cc7ff"}),
+    "z2": ("""
+KKKKK
+KzzzK
+KKzKK
+KzzzK
+KKKKK""", {"K": "#2b3a55", "z": "#c9e0ff"}),
     "siren": ("""
 .KKK.
 KRWRK
