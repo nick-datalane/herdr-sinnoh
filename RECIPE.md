@@ -64,6 +64,7 @@ Left to right, top to bottom:
 - Some wiki map rips were captured at dusk, with Platinum's blue evening tint baked into the pixels (Floaroma Meadow was one). Check a new map's grass against the others (daytime grass is around `#50f888` / `#28c868`) and run it through `art/daylight.py` with a daytime reference if it looks dark.
 - The font file is 7 MB. Themes must be in `themes/`.
 - Herdr's JS engine can stop creating mod copies after many hot reloads and throwaway tab copies in one window session: every new copy then fails with `Null"null"` ("This view could not be re-rendered", "pokemon did not load"), even copies of shipped mods, while `herdr-app check` still passes. Nothing is wrong with the files; quit and reopen Herdr (terminals and agents survive in herdr-core). Batch edits and reload once.
+- The saved layout clicks can come back from a restart with the `city` block hidden while the sidebar is wide (no scene, just cards). The watcher's first tick reconciles the two; cmd-b always moves them together.
 - Built and checked on macOS with Herdr 0.1.13.
 
 ## Done when

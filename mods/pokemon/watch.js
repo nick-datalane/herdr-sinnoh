@@ -3,8 +3,8 @@
 // keeps the news entries in shared "pokemon.news" (news.js draws them), retracts Herdr's own toast for the same
 // event and, when the Herdr window isn't active, posts a macOS notification so the event reaches the person in
 // whatever app they're in.
-import { agents, shared, setShared, window as win, notify, closeOverlay, exec } from "herdr";
-import { assign, monsterOf } from "./state.js";
+import { agents, shared, setShared, window as win, notify, closeOverlay, exec, run, layout } from "herdr";
+import { assign, monsterOf, find } from "./state.js";
 import { task } from "./roster.js";
 
 export const NEWS = "pokemon.news"; // [{address, pane, at}], newest first
@@ -15,6 +15,7 @@ const looking = (a, w) => Boolean(a.focused && w?.active);
 export function startWatch(cx) {
   let last = null; // address → status at the previous tick; the first tick only takes the baseline
   cx.timer.every(1000, () => {
+    if (!last) reconcileSidebar();
     const list = agents();
     const w = win();
     const items = shared(NEWS) ?? [];
@@ -38,6 +39,16 @@ export function startWatch(cx) {
     });
     if (JSON.stringify(next) !== JSON.stringify(items)) setShared(NEWS, next);
   });
+}
+
+// After a restart the saved clicks can disagree: a wide sidebar with the scene block hidden, or the rail with it
+// shown. cmd-b (roster.js toggleSidebar) always moves them together; this puts them back together once at start.
+function reconcileSidebar() {
+  const L = layout();
+  const open = (find(L, "sidebar")?.size?.px ?? 400) >= 160;
+  const hidden = Boolean(find(L, "city")?.hidden);
+  if (open && hidden) run("layout.show", { id: "city" });
+  if (!open && !hidden) run("layout.hide", { id: "city" });
 }
 
 // the battle line: "Pikachu used Thunderbolt!" / "Defeated: <task>"; blocked: "Pikachu needs you!"
