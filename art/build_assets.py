@@ -14,7 +14,7 @@ import render as R          # hexc() and puff() for the effect icons
 
 OUT = os.path.join(ROOT, "mods", "pokemon", "assets")
 SAMPLES = os.path.join(ART, "samples")
-MODES = ("day", "night")
+MODES = ("day",)          # the art is always daylight, whatever the theme; only the chrome goes dark
 FRAMES = ("idle", "walk", "smash", "roar", "wave")
 SPRITE_H = 60
 CANVAS_W, CANVAS_H = 400, 480
@@ -37,14 +37,6 @@ def bbox(arr):
 #   map: a DS overworld map in art/maps-gen4/ (from the Pokémon Fandom wiki, 1 map px = 1 art px)
 #   crop: the window shown in the sidebar (at most 400×480; smaller maps are centred by the mod)
 #   stands: where the agents' Pokémon put their feet, in crop coordinates, used in order
-def scene_night(img):
-    # moonlight: darker and bluer, with a little lift so snow and water still read
-    a = np.asarray(img.convert("RGBA")).astype(float)
-    a[..., 0] = a[..., 0] * 0.40 + 4
-    a[..., 1] = a[..., 1] * 0.46 + 8
-    a[..., 2] = a[..., 2] * 0.70 + 24
-    return Image.fromarray(np.clip(a, 0, 255).astype(np.uint8), "RGBA")
-
 def thumb(img, size=64):
     # square chip of the scene's middle, smooth-scaled: shown at 20–30 logical px in the top bar and the rail
     s = min(img.width, img.height)
@@ -60,9 +52,8 @@ def build_places(manifest):
         full = Image.open(os.path.join(ART, "maps-gen4", p["map"])).convert("RGBA")
         assert x + w <= full.width and y + h <= full.height, f"{p['id']}: crop outside the map"
         day = full.crop((x, y, x + w, y + h))
-        for mode, img in (("day", day), ("night", scene_night(day))):
-            save2x(img, f"{OUT}/{mode}/places/{p['id']}.png")
-            save1x(thumb(img), f"{OUT}/{mode}/places/{p['id']}-thumb.png")
+        save2x(day, f"{OUT}/day/places/{p['id']}.png")
+        save1x(thumb(day), f"{OUT}/day/places/{p['id']}-thumb.png")
         scenes[p["id"]] = day
         manifest["places"].append({
             "id": p["id"], "name": p["name"], "color": p["color"], "w": w, "h": h,
@@ -72,14 +63,6 @@ def build_places(manifest):
     return scenes
 
 # ---------- Pokémon ----------
-def to_night(arr):
-    # Night: every pixel darkened to 78 %, except the sparkles of the done pose, which keep glowing
-    import gen4 as G
-    out = arr.astype(float)
-    keep = (arr == G.SPARK).all(-1) | (arr == G.SPARK_CORE).all(-1) | (arr[:, :, 3] == 0)
-    out[~keep, :3] *= 0.78
-    return np.clip(out, 0, 255).astype(np.uint8)
-
 def pixelize(sheet):
     tmp = tempfile.mkdtemp(prefix="pokemon-px-")
     subprocess.run([sys.executable, "-I", os.path.join(ART, "pixelize.py"), os.path.join(ROOT, sheet), tmp, str(SPRITE_H), "--poses", str(len(FRAMES))],
@@ -129,18 +112,16 @@ def build_monsters(manifest):
     sprites = {}
     for m in roster:
         mid, fr = m["id"], raw[m["id"]]
-        for mode in MODES:
-            conv = (lambda a: a) if mode == "day" else to_night
-            for k in sorted(set(POSE_FILE.values())):
-                pose = next(p for p, f in POSE_FILE.items() if f == k)
-                save2x(in_box(conv(fr[pose]), bw, bh), f"{OUT}/{mode}/monsters/{mid}/{k}")
-            # face crops of the idle pose: 48×48 shown at 24 (pane header, tabs) and at 48 (roster, 2×);
-            # 32×32 shown at 32 (news card, 2×)
-            f48 = conv(G.face(fr["idle"], 48))
-            f32 = conv(G.face(fr["idle"], 32))
-            save1x(Image.fromarray(f48, "RGBA"), f"{OUT}/{mode}/monsters/{mid}/head.png")
-            save2x(f48, f"{OUT}/{mode}/monsters/{mid}/avatar.png")
-            save2x(f32, f"{OUT}/{mode}/monsters/{mid}/face.png")
+        for k in sorted(set(POSE_FILE.values())):
+            pose = next(p for p, f in POSE_FILE.items() if f == k)
+            save2x(in_box(fr[pose], bw, bh), f"{OUT}/day/monsters/{mid}/{k}")
+        # face crops of the idle pose: 48×48 shown at 24 (pane header, tabs) and at 48 (roster, 2×);
+        # 32×32 shown at 32 (news card, 2×)
+        f48 = G.face(fr["idle"], 48)
+        f32 = G.face(fr["idle"], 32)
+        save1x(Image.fromarray(f48, "RGBA"), f"{OUT}/day/monsters/{mid}/head.png")
+        save2x(f48, f"{OUT}/day/monsters/{mid}/avatar.png")
+        save2x(f32, f"{OUT}/day/monsters/{mid}/face.png")
         sprites[mid] = {k: in_box(fr[k], bw, bh) for k in FRAMES}
         entry = {"id": mid, "name": m["name"], "top": bh - fr["idle"].shape[0]}
         if m.get("dex"):
@@ -269,8 +250,6 @@ def fx_bitmap(art, colors, mode):
         for xx, ch in enumerate(r):
             if ch in colors:
                 c = R.hexc(colors[ch]).astype(int)
-                if mode == "night" and ch in "KB" and colors is FX["brick"][1]:
-                    c[:3] = (c[:3] * 0.8).astype(int)
                 out[yy, xx] = c
     return out
 

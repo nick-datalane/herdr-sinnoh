@@ -17,7 +17,7 @@ cd herdr-sinnoh
 herdr-app do layout.switch '{"name":"pokemon"}'
 ```
 
-`install.sh` copies only this layout's own files into `~/.config/herdr-app/` (it respects `HERDR_APP_HOME`): `layouts/pokemon.json` + `.svg`, `themes/pokemon.json` + `pokemon-night.json` and `mods/pokemon/`. It merges one key, `cmd-b` → collapse the sidebar while this layout is shown, into `keys.json`, asks before replacing a `cmd-b` you already bound in this layout's section, and backs `keys.json` up first. The layout follows the system's light or dark mode.
+`install.sh` copies only this layout's own files into `~/.config/herdr-app/` (it respects `HERDR_APP_HOME`): `layouts/pokemon.json` + `.svg`, `themes/pokemon.json` + `pokemon-night.json` and `mods/pokemon/`. It merges one key, `cmd-b` → collapse the sidebar while this layout is shown, into `keys.json`, asks before replacing a `cmd-b` you already bound in this layout's section, and backs `keys.json` up first. The chrome and the cards follow the system's light or dark mode; the scenes and the Pokémon are always in daylight.
 
 ## Keys
 

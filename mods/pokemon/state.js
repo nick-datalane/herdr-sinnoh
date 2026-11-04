@@ -27,7 +27,8 @@ export function find(node, id) {
   return null;
 }
 
-export const asset = (t, name) => `${ASSETS}/${isNight(t) ? "night" : "day"}/${name}`;
+// the scenes, Pokémon and effects are always the daylight art, even when the theme is dark
+export const asset = (_t, name) => `${ASSETS}/day/${name}`;
 
 export const STATUS_TEXT = { idle: "Resting", working: "Working", done: "Done", blocked: "Needs you" };
 

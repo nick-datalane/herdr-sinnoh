@@ -1,6 +1,6 @@
 # Pokémon Sinnoh
 
-A Herdr window in the look of Pokémon Platinum. The top of the left sidebar is a scene: the current space's Sinnoh location, drawn with the real DS overworld map, and the space's agents standing in it as Pokémon drawn with their Platinum battle sprites. Every space gets a random location out of twelve of Sinnoh's prettiest places; every agent gets a random Pokémon out of all 493. Below the scene the Pokédex lists the agents as dossier cards or small photos. The top bar and the pane headers show the Pokémon's faces, and a news card pops up like a battle message when a background agent finishes. Light by default, moonlit at night. All text uses the Fusion Pixel 12 px font.
+A Herdr window in the look of Pokémon Platinum. The top of the left sidebar is a scene: the current space's Sinnoh location, drawn with the real DS overworld map, and the space's agents standing in it as Pokémon drawn with their Platinum battle sprites. Every space gets a random location out of twelve of Sinnoh's prettiest places; every agent gets a random Pokémon out of all 493. Below the scene the Pokédex lists the agents as dossier cards or small photos. The top bar and the pane headers show the Pokémon's faces, and a news card pops up like a battle message when a background agent finishes. The scenes and the Pokémon are always in daylight; only the chrome and the cards follow light or dark mode. All text uses the Fusion Pixel 12 px font.
 
 ![Pokémon Sinnoh](preview.png)
 
@@ -20,7 +20,7 @@ Left to right, top to bottom:
 - **Side panel** (hidden, 368 px): Herdr's Files and Changes.
 - **News card** (floating, right edge, bottom; Herdr draws the frame): 286 px wide, a 3 px red strip, a "POKEDEX NEWS" header with ×, and up to 3 rows of 48 px: a 32 px face, then two lines. Done: "Bidoof used Tackle!" over "Defeated: <task>" (the space name when there is no task). Blocked: "Bidoof needs you!" over "<space> · <task>". Blocked rows end in a 6 px yellow square. "N more" follows when there are more.
 
-**Themes**: `pokemon` (light) has canvas/chrome `#f5f5f4`, surface `#fbfbfa`, selected `#e2dfda`, border `#dedbd5`, input `#2b2620`, accent `#e07a3c`. `pokemon-night` (dark) has canvas/chrome `#0e1117`, background `#12161d`, selected `#262e3b`, border `#232a35`, input `#4fd1e5`, accent `#ffd877`. At night the scenes are darker and bluer (R×0.40+4, G×0.46+8, B×0.70+24), the Pokémon 78 % as bright with the sparkles kept, the notes unchanged.
+**Themes**: `pokemon` (light) has canvas/chrome `#f5f5f4`, surface `#fbfbfa`, selected `#e2dfda`, border `#dedbd5`, input `#2b2620`, accent `#e07a3c`. `pokemon-night` (dark) has canvas/chrome `#0e1117`, background `#12161d`, selected `#262e3b`, border `#232a35`, input `#4fd1e5`, accent `#ffd877`. The art never changes with the theme: scenes, Pokémon, faces and effects are the same daylight files in both modes (`assets/day/` is the only set).
 
 ## How it behaves
 
@@ -32,14 +32,14 @@ Left to right, top to bottom:
 - **Collapse**: ‹ / › or `cmd-b` in this layout hides the scene and resizes `sidebar` between 400 and 76 px.
 - **Top bar**: click the capsule to rename the space. Click a tab to select it, double-click to rename, drag onto another to reorder, right-click for Herdr's tab menu. The wheel over the bar switches tabs.
 - **News**: an agent joins the card when its status changes to done or blocked while it isn't focused. Agents seen for the first time don't count. Newest on top, one row per agent; the face drops in with a spring. Clicking a row focuses that pane and removes the row. A row also leaves when its agent gets focus, its status moves on, or the agent goes away. × clears the card; an empty card draws nothing.
-- **Light/dark** follows the system (or `appearance` in settings.json).
+- **Light/dark** follows the system (or `appearance` in settings.json) for the chrome and the cards; the scene stays daylight.
 
 ## Built from
 
 - The structure, the Pokédex cards, the news card, the top bar and the pane headers come from Jiqize's Kaiju City layout (github.com/Jiqize/herdr-kaiju, MIT). This recipe describes the Pokémon reskin of it.
 - `layouts/pokemon.json`: the root `row` (titlebar none, traffic_lights [16, 18], theme `{light: "pokemon", dark: "pokemon-night"}`, ui_font `Fusion Pixel 12px Prop zh-Hans`, terminal_padding [12, 10], 2 px `border` dividers) holds a `sidebar` column (px 400, `chrome`) with `city` (px 492, `window_drag`, part `city`) and `roster` (part `roster`), and a `work` column with `tabs` (px 44, part `top`) and the `main` tab block (pane header `{mod: "pokemon"}`, height 28) beside the hidden `panel`. Root `floating`: the `news` part on the right edge, aligned end.
 - `mods/pokemon/`: `main.js` dispatches on `props()`: `pane` → `pane.js`; part `city` → `city.js` (the scene), `roster` → `roster.js`, `top` → `top.js`, `news` → `news.js`. `state.js`: night detection, asset paths, the random Pokémon per agent (`assign`, `monsterOf`), the random place per space (`assignPlaces`, `placeOf`, `placeFor`).
-- `mods/pokemon/assets/{day,night}/`: `places/<id>.png` (the scene, 2×) and `places/<id>-thumb.png` (64×64), `monsters/<id>/` (`idle.png`, `roar.png` in the uniform sprite box, `head.png` 48×48 at 1×, `avatar.png` 48×48 at 2×, `face.png` 32×32 at 2×), `fx/` (bang, question, z1, z2, siren, brick, note1–3, clip). `manifest.json` / `manifest.js`: canvas, places (name, colour, size, stands), the sprite box, `files` (which file each pose uses), the 493 monsters (id, name, dex, move, top), effect sizes.
+- `mods/pokemon/assets/day/`: `places/<id>.png` (the scene, 2×) and `places/<id>-thumb.png` (64×64), `monsters/<id>/` (`idle.png`, `roar.png` in the uniform sprite box, `head.png` 48×48 at 1×, `avatar.png` 48×48 at 2×, `face.png` 32×32 at 2×), `fx/` (bang, question, z1, z2, siren, brick, note1–3, clip). `manifest.json` / `manifest.js`: canvas, places (name, colour, size, stands), the sprite box, `files` (which file each pose uses), the 493 monsters (id, name, dex, move, top), effect sizes.
 - `art/`: `places.json` (id, name, colour, map file, crop, stands) and `maps-gen4/` (the DS maps, from the Pokémon Fandom wiki), `roster.json` (all 493), `sprites-gen4/` (Platinum and Diamond/Pearl sprites and `names.json` from PokeAPI, `moves.json` built from PokeAPI's Platinum level-up data: the strongest same-type damaging move, with hand-picked signature moves for the famous ones), `gen4.py` (frames and face crops), `build_assets.py` (builds everything and writes `art/samples/assets-check.png`, every scene with Pokémon on its stands, and `assets-faces.png`). `pokemon.py` (code-drawn chibis) and `pixelize.py` remain usable through `"gen"` / `"sheet"` roster entries.
 - `mods/pokemon/fonts/`: Fusion Pixel 12 px proportional (zh_hans), OFL. `keys.json`: `{"layout:pokemon": {"cmd-b": "pokemon.toggle"}}`.
 - Shared state: `pokemon.monsters`, `pokemon.places`, `pokemon.stats`, `pokemon.roster`.
@@ -70,4 +70,4 @@ Left to right, top to bottom:
 - The Pokédex mode toggle switches between cards and photos and stays after a restart. Cards show the Dex number and the place.
 - `cmd-b` collapses the sidebar to 76 px and back.
 - When an agent in a background tab finishes, the news card says "<Pokémon> used <move>!" / "Defeated: <task>", and clicking it jumps to that agent.
-- With `"appearance": "dark"` in settings.json, the scene turns moonlit.
+- With `"appearance": "dark"` in settings.json, the chrome and cards go dark while the scene stays in daylight.
