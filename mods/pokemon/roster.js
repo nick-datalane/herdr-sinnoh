@@ -5,7 +5,7 @@ import { div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
 import { spaces, agents, run, openOverlay, window, layout, shared, setShared, props } from "herdr";
 import M from "./manifest.js";
-import { asset, assign, monsterOf, placeFor, isNight, shadowColor, FACE, find, STATUS_TEXT } from "./state.js";
+import { asset, assign, monsterOf, placeFor, isNight, shadowColor, FACE, find, STATUS_TEXT, pulse } from "./state.js";
 
 export const WIDE = 400;
 export const RAIL = 76;
@@ -287,6 +287,7 @@ const button = (t, id, icon, tip, action) => div().id(id).size(32).flex_none().f
 
 export function roster(view, t, cx) {
   const list = agents();
+  pulse(list); // wakes the floating news card, which doesn't re-render on agent changes by itself
   const now = Date.now();
   const tabs = new Map(spaces().flatMap((s) => s.tabs.map((tb) => [tb.id, tb])));
   // 有怪兽在拆楼时，每到整分钟重绘一次刷新计时；没人干活就不预约（不做周期性重绘）

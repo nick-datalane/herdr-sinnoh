@@ -39,6 +39,14 @@ const BY_ID = new Map(M.monsters.map((m) => [m.id, m]));
 // Every new agent gets a random Pokémon from the whole roster (493 of them), never one another agent
 // on screen already has. The pick is kept in shared state so every part shows the same one and it
 // survives a restart; an agent keeps its Pokémon until it goes away.
+// Floating blocks (the news card) don't re-render when agents change, only on focus, layout and shared-state
+// changes, so the roster, which does re-render, writes the agents' status signature here: every copy then
+// re-renders at once and the news card sees each working → done step.
+export function pulse(list) {
+  const sig = list.map((a) => `${a.address}:${a.status}:${a.focused ? 1 : 0}`).join(" ");
+  if (shared("pokemon.pulse") !== sig) setShared("pokemon.pulse", sig);
+}
+
 export function assign(list) {
   const old = shared(KEY) ?? { map: {} };
   const map = {};

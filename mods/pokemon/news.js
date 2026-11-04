@@ -3,11 +3,32 @@
 //   自己切过去、状态变化或 Agent 消失时自动移除；× 清空；没有条目不渲染
 import { div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
-import { agents, props, run } from "herdr";
+import { agents, props, run, notify, closeOverlay, exec } from "herdr";
 import { asset, assign, monsterOf } from "./state.js";
 import { task } from "./roster.js";
 
 const HOT = (s) => s === "done" || s === "blocked";
+
+// Herdr posts its own toast for the same event ("… is done" / "needs you") next to this card, and a
+// layout can't replace the toast mod. So the card retracts it: overlay ids are sequential ("o46"), so a
+// probe notification (closed before it can draw) reveals the counter, and `herdr-app status` says whether
+// anything but toasts is open. Only when toasts are the only overlays, the ids just below the probe are
+// closed; closing an id that isn't live does nothing. Called twice per event, since Herdr may post its
+// toast a moment after the status change reaches us.
+async function dismissStockToasts() {
+  const probe = notify({ title: "", timeout: 1 });
+  closeOverlay(probe);
+  const n = Number(String(probe).replace(/\D/g, ""));
+  if (!n) return;
+  let overlays;
+  try {
+    overlays = JSON.parse((await exec("herdr-app", ["status"])).stdout).overlays;
+  } catch {
+    return;
+  }
+  if (!Array.isArray(overlays) || !overlays.length || overlays.some((o) => o !== "toast")) return;
+  for (let k = 1; k <= 16; k++) closeOverlay(`o${n - k}`);
+}
 const MAX = 3;
 const RED = "#d9573f";
 
@@ -18,7 +39,8 @@ function track(view) {
   const live = new Map(list.map((a) => [a.address, a]));
   for (const a of list) {
     const prev = n.last.get(a.address);
-    if (prev && !HOT(prev) && HOT(a.status) && !a.focused) {
+    // seen before (in any state, even starting) and now done or blocked
+    if (prev !== undefined && !HOT(prev) && HOT(a.status) && !a.focused) {
       n.items = n.items.filter((it) => it.address !== a.address);
       n.items.unshift({ address: a.address, pane: a.pane, fresh: true });
     }
@@ -41,6 +63,12 @@ export function news(view, t, cx) {
   // 新条目先画高一点，下一帧落回原位，弹簧带出回弹
   if (!demo && n.items.some((it) => it.fresh)) {
     cx.timer.after(40, (cx) => { n.items.forEach((it) => (it.fresh = false)); cx.notify(); });
+  }
+  // a new entry replaces Herdr's toast for the same event
+  if (!demo && n.items.some((it) => it.fresh && !it.swept)) {
+    n.items.forEach((it) => (it.swept = true));
+    cx.timer.after(5, () => dismissStockToasts());
+    cx.timer.after(450, () => dismissStockToasts());
   }
 
   const row = (it) => {

@@ -31,7 +31,7 @@ Left to right, top to bottom:
 - **Pokédex**: the mode toggle switches card/photo mode and is remembered (`pokemon.roster`). Timers refresh at the next whole minute, only while some agent is working. The score counts one "done" per finished round of work (working → done or idle) and today's working time, reset at midnight (`pokemon.stats`).
 - **Collapse**: ‹ / › or `cmd-b` in this layout hides the scene and resizes `sidebar` between 400 and 76 px.
 - **Top bar**: click the capsule to rename the space. Click a tab to select it, double-click to rename, drag onto another to reorder, right-click for Herdr's tab menu. The wheel over the bar switches tabs.
-- **News**: an agent joins the card when its status changes to done or blocked while it isn't focused. Agents seen for the first time don't count. Newest on top, one row per agent; the face drops in with a spring. Clicking a row focuses that pane and removes the row. A row also leaves when its agent gets focus, its status moves on, or the agent goes away. × clears the card; an empty card draws nothing.
+- **News**: an agent joins the card when its status changes to done or blocked while it isn't focused, and Herdr's own toast for that event is retracted so the card is the only alert. Agents seen for the first time don't count. Newest on top, one row per agent; the face drops in with a spring. Clicking a row focuses that pane and removes the row. A row also leaves when its agent gets focus, its status moves on, or the agent goes away. × clears the card; an empty card draws nothing.
 - **Light/dark** follows the system (or `appearance` in settings.json) for the chrome and the cards; the scene stays daylight.
 
 ## Built from
@@ -58,7 +58,9 @@ Left to right, top to bottom:
 - Herdr's "done" only clears when you actually look at the agent; `pane.focus` from a command doesn't clear it.
 - The random picks are made by whichever part renders first and written to shared state at once; all parts read the same map on the next frame.
 - There is no repeating timer; notes and lights are native `loop`s. With nothing changing, the mod doesn't redraw.
-- The floating news frame is drawn by Herdr; the mod draws only the content. Herdr's own toast still shows next to it.
+- A floating block doesn't re-render when agents change (only on focus, layout and shared-state changes), so on its own the news card misses most working → done steps. The roster, which does re-render, calls `pulse(list)` (state.js) on every render: it writes the agents' status signature to shared `pokemon.pulse` when it changed, and a shared-state change re-renders every copy, the float included.
+- `notify()` and `writeTextFile()` called from a layout-owned copy's render are unreliable; `setShared` always works, and shared.json on disk shows it, which makes it the dependable debug channel.
+- The floating news frame is drawn by Herdr; the mod draws only the content. Herdr posts its own toast for the same event, and a layout can't swap the shipped `toast` mod, so the news part retracts it: a probe `notify()` closed at once reveals the sequential overlay counter (`o46`), `exec("herdr-app", ["status"])` lists the open overlays by mod name, and when only toasts are open the ids just below the probe are closed (an id that isn't live is a no-op). It runs at once and again 450 ms later, because Herdr can post the toast after the status change reaches the mod.
 - Some wiki map rips were captured at dusk, with Platinum's blue evening tint baked into the pixels (Floaroma Meadow was one). Check a new map's grass against the others (daytime grass is around `#50f888` / `#28c868`) and run it through `art/daylight.py` with a daytime reference if it looks dark.
 - The font file is 7 MB. Themes must be in `themes/`.
 - Built and checked on macOS with Herdr 0.1.13.
