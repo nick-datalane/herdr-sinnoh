@@ -1,5 +1,5 @@
 // Shared logic: asset paths, night detection, the random Pokémon per agent and the random Sinnoh location per space
-import { spaces, shared, setShared } from "herdr";
+import { spaces, shared, setShared, terminals } from "herdr";
 import M from "./manifest.js";
 
 const ASSETS = "mods/pokemon/assets";
@@ -35,17 +35,32 @@ export const STATUS_TEXT = { idle: "Resting", working: "Working", done: "Done", 
 // ---------- Pokémon per agent ----------
 const KEY = "pokemon.monsters";
 const BY_ID = new Map(M.monsters.map((m) => [m.id, m]));
+const key = (s) => String(s).toLowerCase().replace(/[^a-z0-9\u2640\u2642]/g, "");
+const BY_NAME = new Map(M.monsters.map((m) => [key(m.name), m]));
+
+// A person can pick an agent's Pokémon by hand with a label on its terminal, `hc label t4 pokemon=piplup`
+// (a name or a Dex number); the label stays with the terminal, so the choice survives restarts. Unknown
+// names are ignored and the random pick stays.
+function chosen(address) {
+  const want = terminals().find((t) => t.address === address)?.labels?.pokemon;
+  if (want == null || want === "") return null;
+  const m = BY_ID.get(String(want).trim().padStart(3, "0")) ?? BY_NAME.get(key(want));
+  return m?.id ?? null;
+}
 
 // Every new agent gets a random Pokémon from the whole roster (493 of them), never one another agent
-// on screen already has. The pick is kept in shared state so every part shows the same one and it
-// survives a restart; an agent keeps its Pokémon until it goes away.
+// on screen already has, unless its terminal's `pokemon` label names one. The pick is kept in shared
+// state so every part shows the same one and it survives a restart; an agent keeps its Pokémon until
+// it goes away.
 export function assign(list) {
   const old = shared(KEY) ?? { map: {} };
   const map = {};
   let changed = false;
   for (const a of list) {
-    const id = old.map?.[a.address];
+    const want = chosen(a.address);
+    const id = want ?? old.map?.[a.address];
     if (id && BY_ID.has(id)) map[a.address] = id;
+    if (want && want !== old.map?.[a.address]) changed = true;
   }
   for (const a of list) {
     if (map[a.address]) continue;

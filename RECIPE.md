@@ -25,7 +25,7 @@ Left to right, top to bottom:
 ## How it behaves
 
 - **Space → place**: a space gets a random place the first time it is seen, avoiding places other spaces have while any are free (12 places, so the first 12 spaces are all different). Kept in shared `pokemon.places`; a space keeps its place until it closes. Switching spaces swaps the scene.
-- **Agent → Pokémon**: likewise, from all 493, shared `pokemon.monsters`.
+- **Agent → Pokémon**: likewise, from all 493, shared `pokemon.monsters`. A `pokemon` label on the terminal (`hc label t4 pokemon=piplup`, a name or a Dex number) overrides the random pick; `assign` reads it from `terminals()` each call.
 - **Status → Pokémon**: idle: sprite + two Zs on native `loop`s (top 0 → −10/−8 px, opacity 1 → 0.15, periods 2600/3200 ms). working: sprite, three notes on native `loop`s (top 0 → −8/−10/−7 px, opacity 1 → 0.35, periods 1500/1900/1700 ms). done: the sprite with sparkles + "!!". blocked: sprite + "?". Stand changes slide over 500 ms.
 - **Clicks**: a Pokémon, a card or a tile focuses the agent's pane. Right-click a space row or rail tile for Herdr's space menu.
 - **Pokédex**: the mode toggle switches card/photo mode and is remembered (`pokemon.roster`). Timers refresh at the next whole minute, only while some agent is working. The score counts one "done" per finished round of work (working → done or idle) and today's working time, reset at midnight (`pokemon.stats`).

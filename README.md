@@ -33,7 +33,7 @@ herdr-app do layout.switch '{"name":"pokemon"}'
 ## What you get
 
 - **Twelve places**, random per space: Lake Verity, Lake Acuity, Floaroma Meadow, Eterna Forest, Sunyshore City, Snowpoint City, Valor Lakefront, the Pokémon League, the Resort Area, Flower Paradise, Twinleaf Town and Hearthome City. A space keeps its place until it closes.
-- **All 493 Pokémon**, random per agent, with their Platinum battle sprites. An agent keeps its Pokémon until it goes away.
+- **All 493 Pokémon**, random per agent, with their Platinum battle sprites. An agent keeps its Pokémon until it goes away. To pick one by hand, label the agent's terminal with a name or Dex number, `hc label t4 pokemon=piplup`; the label stays with the terminal, so the choice survives restarts.
 - **Status without noise**: working = music notes, done = sparkles and "!!", blocked = "?", resting = slowly drifting Zs. Nothing shakes.
 - **Pokédex cards** (or small photos: the toggle in the header) with the Dex number, the app, the tab, the task, a timer, the place and a score.
 - **Battle-line news** for agents finishing in the background: "Giratina used Shadow Force! Defeated: migrate the schema". Click it to jump there.
