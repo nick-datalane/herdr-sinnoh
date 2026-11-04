@@ -3,7 +3,7 @@
 //   city：the scene (space = a Sinnoh location, agent = a Pokémon), see city.js
 //   roster：the Pokédex cards; a narrow rail when the sidebar is collapsed, see roster.js
 //   top：the space capsule and the tab pills, see top.js
-//   news：the battle-line news card, see news.js
+//   news：the battle-line news card, see news.js (entries come from the watcher in watch.js)
 //   pane header: when props carry a pane, see pane.js
 
 import { View, div } from "gpui-kit";
@@ -13,11 +13,13 @@ import { roster, toggleSidebar } from "./roster.js";
 import { top } from "./top.js";
 import { paneHeader } from "./pane.js";
 import { news } from "./news.js";
+import { startWatch } from "./watch.js";
 
 export default class Kaiju extends View {
   init(_props, cx) {
     // 只有名册这一份接快捷键命令（keys.json: "cmd-b": "pokemon.toggle"），避免多份抢命令
     if (props()?.part === "roster") {
+      startWatch(cx); // the news watcher: one copy, keeps running while the window is hidden
       cx.spawn(async (cx) => {
         for (;;) {
           const c = await nextCommand();
