@@ -63,6 +63,7 @@ Left to right, top to bottom:
 - The floating news frame is drawn by Herdr; the mod draws only the content. Herdr posts its own toast for the same event, and a layout can't swap the shipped `toast` mod, so the watcher retracts it: a probe `notify()` closed at once reveals the sequential overlay counter (`o46`), `exec("herdr-app", ["status"])` lists the open overlays by mod name, and when only toasts are open the ids just below the probe are closed (an id that isn't live is a no-op). It runs at once and again half a second later, because Herdr can post the toast after the status change reaches the mod. Herdr's toast times out after about 5 s; the card and the macOS notification don't.
 - Some wiki map rips were captured at dusk, with Platinum's blue evening tint baked into the pixels (Floaroma Meadow was one). Check a new map's grass against the others (daytime grass is around `#50f888` / `#28c868`) and run it through `art/daylight.py` with a daytime reference if it looks dark.
 - The font file is 7 MB. Themes must be in `themes/`.
+- Herdr's JS engine can stop creating mod copies after many hot reloads and throwaway tab copies in one window session: every new copy then fails with `Null"null"` ("This view could not be re-rendered", "pokemon did not load"), even copies of shipped mods, while `herdr-app check` still passes. Nothing is wrong with the files; quit and reopen Herdr (terminals and agents survive in herdr-core). Batch edits and reload once.
 - Built and checked on macOS with Herdr 0.1.13.
 
 ## Done when
