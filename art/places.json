@@ -1,0 +1,358 @@
+[
+ {
+  "id": "verity",
+  "name": "Lake Verity",
+  "color": "#5b8fd6",
+  "map": "verity.png",
+  "crop": [
+   170,
+   100,
+   400,
+   480
+  ],
+  "stands": [
+   [
+    40,
+    400
+   ],
+   [
+    125,
+    455
+   ],
+   [
+    70,
+    475
+   ]
+  ]
+ },
+ {
+  "id": "acuity",
+  "name": "Lake Acuity",
+  "color": "#9fc4e6",
+  "map": "acuity.png",
+  "crop": [
+   290,
+   80,
+   400,
+   480
+  ],
+  "stands": [
+   [
+    330,
+    300
+   ],
+   [
+    326,
+    395
+   ],
+   [
+    240,
+    130
+   ],
+   [
+    320,
+    70
+   ]
+  ]
+ },
+ {
+  "id": "floaroma",
+  "name": "Floaroma Meadow",
+  "color": "#e07aa8",
+  "map": "floaroma.png",
+  "crop": [
+   320,
+   120,
+   400,
+   480
+  ],
+  "stands": [
+   [
+    70,
+    430
+   ],
+   [
+    160,
+    460
+   ],
+   [
+    360,
+    450
+   ],
+   [
+    250,
+    300
+   ]
+  ]
+ },
+ {
+  "id": "eterna",
+  "name": "Eterna Forest",
+  "color": "#3f8f4f",
+  "map": "eterna.png",
+  "crop": [
+   1100,
+   620,
+   400,
+   480
+  ],
+  "stands": [
+   [
+    120,
+    300
+   ],
+   [
+    220,
+    240
+   ],
+   [
+    200,
+    410
+   ],
+   [
+    90,
+    440
+   ]
+  ]
+ },
+ {
+  "id": "sunyshore",
+  "name": "Sunyshore City",
+  "color": "#f0a030",
+  "map": "sunyshore.png",
+  "crop": [
+   440,
+   300,
+   400,
+   480
+  ],
+  "stands": [
+   [
+    60,
+    470
+   ],
+   [
+    150,
+    420
+   ],
+   [
+    260,
+    455
+   ],
+   [
+    150,
+    330
+   ]
+  ]
+ },
+ {
+  "id": "snowpoint",
+  "name": "Snowpoint City",
+  "color": "#a9c4d8",
+  "map": "snowpoint.png",
+  "crop": [
+   56,
+   0,
+   400,
+   480
+  ],
+  "stands": [
+   [
+    100,
+    440
+   ],
+   [
+    210,
+    350
+   ],
+   [
+    310,
+    440
+   ],
+   [
+    205,
+    240
+   ]
+  ]
+ },
+ {
+  "id": "valor-beach",
+  "name": "Valor Lakefront",
+  "color": "#e8d49a",
+  "map": "valor-beach.png",
+  "crop": [
+   350,
+   150,
+   400,
+   480
+  ],
+  "stands": [
+   [
+    60,
+    230
+   ],
+   [
+    170,
+    260
+   ],
+   [
+    300,
+    200
+   ],
+   [
+    380,
+    250
+   ]
+  ]
+ },
+ {
+  "id": "league",
+  "name": "Pokémon League",
+  "color": "#8b6fc9",
+  "map": "league.png",
+  "crop": [
+   56,
+   60,
+   400,
+   480
+  ],
+  "stands": [
+   [
+    70,
+    450
+   ],
+   [
+    330,
+    455
+   ],
+   [
+    60,
+    230
+   ],
+   [
+    340,
+    230
+   ]
+  ]
+ },
+ {
+  "id": "resort",
+  "name": "Resort Area",
+  "color": "#5fb86f",
+  "map": "resort.png",
+  "crop": [
+   134,
+   2,
+   400,
+   480
+  ],
+  "stands": [
+   [
+    60,
+    180
+   ],
+   [
+    120,
+    420
+   ],
+   [
+    340,
+    440
+   ],
+   [
+    200,
+    140
+   ]
+  ]
+ },
+ {
+  "id": "paradise",
+  "name": "Flower Paradise",
+  "color": "#f3a6c9",
+  "map": "paradise.png",
+  "crop": [
+   40,
+   0,
+   400,
+   382
+  ],
+  "stands": [
+   [
+    120,
+    250
+   ],
+   [
+    280,
+    230
+   ],
+   [
+    200,
+    320
+   ],
+   [
+    90,
+    160
+   ]
+  ]
+ },
+ {
+  "id": "twinleaf",
+  "name": "Twinleaf Town",
+  "color": "#6fb9a0",
+  "map": "twinleaf.png",
+  "crop": [
+   48,
+   0,
+   400,
+   377
+  ],
+  "stands": [
+   [
+    150,
+    330
+   ],
+   [
+    250,
+    335
+   ],
+   [
+    330,
+    320
+   ],
+   [
+    180,
+    200
+   ]
+  ]
+ },
+ {
+  "id": "hearthome",
+  "name": "Hearthome City",
+  "color": "#c98c5a",
+  "map": "hearthome.png",
+  "crop": [
+   300,
+   120,
+   400,
+   480
+  ],
+  "stands": [
+   [
+    80,
+    380
+   ],
+   [
+    200,
+    420
+   ],
+   [
+    320,
+    390
+   ],
+   [
+    140,
+    300
+   ]
+  ]
+ }
+]

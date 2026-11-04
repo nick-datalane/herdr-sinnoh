@@ -1,0 +1,6 @@
+.DS_Store
+__pycache__/
+art/samples/*
+!art/samples/assets-check.png
+mods/pokemon/jsconfig.json
+mods/pokemon/*.d.ts

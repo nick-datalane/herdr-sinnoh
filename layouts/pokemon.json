@@ -1,0 +1,173 @@
+{
+  "id": "root",
+  "type": "row",
+  "titlebar": "none",
+  "traffic_lights": [
+    16,
+    18
+  ],
+  "theme": {
+    "light": "pokemon",
+    "dark": "pokemon-night"
+  },
+  "background": "canvas",
+  "ui_font": "Fusion Pixel 12px Prop zh-Hans",
+  "terminal_padding": [
+    12,
+    10
+  ],
+  "preview": "layouts/pokemon.svg",
+  "divider": {
+    "width": 2,
+    "color": "border"
+  },
+  "children": [
+    {
+      "id": "sidebar",
+      "type": "column",
+      "size": {
+        "px": 400
+      },
+      "resizable": false,
+      "background": "chrome",
+      "children": [
+        {
+          "id": "city",
+          "type": "block",
+          "size": {
+            "px": 492
+          },
+          "window_drag": true,
+          "content": {
+            "mod": "pokemon",
+            "props": {
+              "part": "city"
+            }
+          }
+        },
+        {
+          "id": "roster",
+          "type": "block",
+          "content": {
+            "mod": "pokemon",
+            "props": {
+              "part": "roster"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "work",
+      "type": "column",
+      "resizable": false,
+      "children": [
+        {
+          "id": "tabs",
+          "type": "block",
+          "size": {
+            "px": 44
+          },
+          "window_drag": true,
+          "content": {
+            "mod": "pokemon",
+            "props": {
+              "part": "top"
+            }
+          }
+        },
+        {
+          "id": "work-body",
+          "type": "row",
+          "padding": [
+            6,
+            12
+          ],
+          "gap": 10,
+          "children": [
+            {
+              "id": "main",
+              "type": "block",
+              "content": {
+                "tab": "active",
+                "pane": {
+                  "gap": 8,
+                  "radius": 4,
+                  "background": "background",
+                  "lone": true,
+                  "border": {
+                    "width": 2,
+                    "color": "border"
+                  },
+                  "focus": {
+                    "width": 2,
+                    "color": "input"
+                  },
+                  "header": {
+                    "content": {
+                      "mod": "pokemon"
+                    },
+                    "height": 28,
+                    "position": "top",
+                    "reveal": "always"
+                  }
+                }
+              }
+            },
+            {
+              "id": "panel",
+              "type": "column",
+              "hidden": true,
+              "size": {
+                "px": 368
+              },
+              "min": 280,
+              "max": 900,
+              "radius": 4,
+              "border": {
+                "width": 2,
+                "color": "border"
+              },
+              "children": [
+                {
+                  "id": "panel-body",
+                  "type": "stack",
+                  "active": "files",
+                  "children": [
+                    {
+                      "id": "files",
+                      "type": "block",
+                      "content": {
+                        "mod": "files"
+                      }
+                    },
+                    {
+                      "id": "changes",
+                      "type": "block",
+                      "content": {
+                        "mod": "changes"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "floating": [
+    {
+      "id": "news",
+      "content": {
+        "mod": "pokemon",
+        "props": {
+          "part": "news"
+        }
+      },
+      "edge": "right",
+      "align": "end"
+    }
+  ]
+}
