@@ -46,7 +46,7 @@ Switch to another layout (`ctrl-shift-l`), then delete `layouts/pokemon.json`, `
 
 The build lives in `art/` and needs Pillow and numpy (`pip3 install pillow numpy`).
 
-- Places: `art/places.json` lists each place's map (`art/maps-gen4/`), the 400×480 window to show and the spots where Pokémon stand. Add or remove entries.
+- Places: `art/places.json` lists each place's map (`art/maps-gen4/`), the 400×480 window to show and the spots where Pokémon stand. Add or remove entries. If a wiki rip was captured at dusk (Floaroma Meadow was), `art/daylight.py` recolours it to daylight from a daytime screenshot of the same tiles.
 - Pokémon: `art/roster.json` lists who can appear; delete lines to shrink the pool to favourites.
 - Then `python3 art/build_assets.py`, look at `art/samples/assets-check.png`, and run `./install.sh` again.
 
