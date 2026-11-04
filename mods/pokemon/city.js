@@ -92,7 +92,7 @@ export function city(view, t) {
     const st = place.stands;
     const p = st[k % st.length];
     const round = Math.floor(k / st.length);
-    return { a, x: ox + p.x + round * 12, y: oy + p.y + round * 8 };
+    return { a, x: ox + p.x + round * 30, y: oy + p.y + round * 20 };
   });
   // back to front: lower feet are drawn later
   items.sort((p, q) => p.y - q.y);
