@@ -29,7 +29,9 @@
      "x": 45,
      "y": 140
     }
-   ]
+   ],
+   "anim": "places/verity.gif",
+   "frames": 12
   },
   {
    "id": "acuity",
@@ -56,7 +58,9 @@
      "x": 295,
      "y": 135
     }
-   ]
+   ],
+   "anim": "places/acuity.gif",
+   "frames": 12
   },
   {
    "id": "floaroma",
@@ -83,7 +87,9 @@
      "x": 210,
      "y": 345
     }
-   ]
+   ],
+   "anim": "places/floaroma.gif",
+   "frames": 16
   },
   {
    "id": "eterna",
@@ -137,7 +143,9 @@
      "x": 305,
      "y": 418
     }
-   ]
+   ],
+   "anim": "places/sunyshore.gif",
+   "frames": 12
   },
   {
    "id": "snowpoint",
@@ -191,7 +199,9 @@
      "x": 225,
      "y": 368
     }
-   ]
+   ],
+   "anim": "places/valor-beach.gif",
+   "frames": 8
   },
   {
    "id": "league",
@@ -218,7 +228,9 @@
      "x": 245,
      "y": 420
     }
-   ]
+   ],
+   "anim": "places/league.gif",
+   "frames": 10
   },
   {
    "id": "resort",
@@ -272,7 +284,9 @@
      "x": 270,
      "y": 320
     }
-   ]
+   ],
+   "anim": "places/paradise.gif",
+   "frames": 12
   },
   {
    "id": "twinleaf",

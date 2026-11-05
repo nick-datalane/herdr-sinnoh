@@ -3,8 +3,8 @@
 // keeps the news entries in shared "pokemon.news" (news.js draws them), retracts Herdr's own toast for the same
 // event and, when the Herdr window isn't active, posts a macOS notification so the event reaches the person in
 // whatever app they're in.
-import { agents, shared, setShared, window as win, notify, closeOverlay, exec, run, layout } from "herdr";
-import { assign, monsterOf, find } from "./state.js";
+import { agents, spaces, shared, setShared, window as win, notify, closeOverlay, exec, run, layout } from "herdr";
+import { assign, assignPlaces, monsterOf, find } from "./state.js";
 import { task } from "./roster.js";
 
 export const NEWS = "pokemon.news"; // [{address, pane, at}], newest first
@@ -20,6 +20,7 @@ export function startWatch(cx) {
     const w = win();
     const items = shared(NEWS) ?? [];
     let next = items;
+    assignPlaces(spaces());   // a `place` label set from a shell takes effect within the second, window shown or not
     if (last) {
       const mids = assign(list);
       for (const a of list) {

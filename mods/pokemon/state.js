@@ -98,15 +98,46 @@ export function monsterOf(id) {
 // ---------- Sinnoh location per space ----------
 const PLACE_KEY = "pokemon.places";
 const PLACE_BY_ID = new Map(M.places.map((p) => [p.id, p]));
+const PLACE_BY_NAME = new Map(M.places.map((p) => [key(p.name), p]));
+
+// a place by id ("verity") or by name ("Lake Verity", "lake verity"), else null
+export function placeNamed(v) {
+  const t = String(v ?? "").trim();
+  return PLACE_BY_ID.get(t.toLowerCase()) ?? PLACE_BY_NAME.get(key(t)) ?? null;
+}
+
+// `hc label <t> place=verity` on any terminal of a space names that space's place: space id → label value
+function placeLabels() {
+  const out = new Map();
+  for (const t of terminals()) {
+    const sid = t.labels?.["herdr.space"];
+    const want = t.labels?.place;
+    if (sid && want != null && want !== "" && !out.has(sid)) out.set(sid, String(want));
+  }
+  return out;
+}
 
 // Every space gets a random location from the manifest, never one another space has while some are free;
-// kept in shared state like the Pokémon, so a space keeps its place until it closes
+// kept in shared state like the Pokémon, so a space keeps its place until it closes. A `place` label on one of
+// its terminals picks the place instead; it acts once per value (recorded in `labels`), so a click on the
+// scene's caption can still move on afterwards.
 export function assignPlaces(list) {
   const old = shared(PLACE_KEY) ?? { map: {} };
   const map = {};
+  const labels = {};
+  const wanted = placeLabels();
   let changed = false;
   for (const s of list) {
-    const id = old.map?.[s.id];
+    let id = old.map?.[s.id];
+    const want = wanted.get(s.id) ?? wanted.get(s.id.replace(/^.*\//, ""));   // remote ids carry a machine/ prefix
+    if (want !== undefined) {
+      labels[s.id] = want;
+      if (want !== old.labels?.[s.id]) {
+        const p = placeNamed(want);
+        if (p) id = p.id;
+        changed = true;
+      }
+    }
     if (id && PLACE_BY_ID.has(id)) map[s.id] = id;
   }
   for (const s of list) {
@@ -118,8 +149,18 @@ export function assignPlaces(list) {
     changed = true;
   }
   if (Object.keys(old.map ?? {}).some((k) => !(k in map))) changed = true;
-  if (changed) setShared(PLACE_KEY, { map });
+  if (JSON.stringify(labels) !== JSON.stringify(old.labels ?? {})) changed = true;
+  if (changed) setShared(PLACE_KEY, { map, labels });
   return new Map(Object.entries(map));
+}
+
+// the next (step 1) or previous (step -1) place for a space, in manifest order: the caption click
+export function stepPlace(spaceId, step = 1) {
+  const cur = shared(PLACE_KEY) ?? { map: {} };
+  const ids = M.places.map((p) => p.id);
+  const i = Math.max(0, ids.indexOf(cur.map?.[spaceId]));
+  const map = { ...(cur.map ?? {}), [spaceId]: ids[(i + step + ids.length) % ids.length] };
+  setShared(PLACE_KEY, { ...cur, map });
 }
 
 export const placeOf = (id) => PLACE_BY_ID.get(id) ?? M.places[0];

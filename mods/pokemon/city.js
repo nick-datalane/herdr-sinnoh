@@ -1,10 +1,10 @@
 // The scene: the current space's Sinnoh location (a Platinum overworld map, 1 map px = 1 logical px) with the
 // space's agents standing in it as Pokémon. Resting agents nap under drifting Zs, working ones hum with music notes,
-// done ones cheer with a "!!", blocked ones wave with a "?". Click a Pokémon to focus its pane.
+// done ones cheer with a "!!", blocked ones wave with a "?". Click a Pokémon to focus its pane; click the caption for another place.
 import { div, image } from "gpui-kit";
 import { spaces, agents, setAgentOrder, run, props } from "herdr";
 import M from "./manifest.js";
-import { asset, assign, assignPlaces, placeOf, monsterOf, STATUS_TEXT } from "./state.js";
+import { asset, assign, assignPlaces, placeOf, stepPlace, monsterOf, STATUS_TEXT } from "./state.js";
 
 const W = M.canvas.w;
 const H = M.canvas.h;
@@ -84,7 +84,8 @@ export function city(view, t) {
   // smaller maps sit centred on the canvas
   const ox = Math.floor((W - place.w) / 2);
   const oy = Math.floor((H - place.h) / 2);
-  stage.child(image(asset(t, place.image)).absolute().left(ox).top(oy).w(place.w).h(place.h));
+  // the animated scene (a GIF: water drifts, flowers sway) where the place has one, else the still one
+  stage.child(image(asset(t, place.anim ?? place.image)).absolute().left(ox).top(oy).w(place.w).h(place.h));
 
   // this space's agents on the stands, in order; past the last stand they double up a little further down
   const mine = ags.filter((a) => a.space === cur.id);
@@ -98,12 +99,18 @@ export function city(view, t) {
   items.sort((p, q) => p.y - q.y);
   for (const it of items) stage.child(monster(t, it.a, mids.get(it.a.address), it.x, it.y));
 
-  // caption
-  stage.child(div().absolute().left(ox + 6).top(oy + place.h - 26).h(20).px(6).flex().items_center()
-    .bg("#000000a0").text_size(12).text_color("#ffffff").child(place.name));
+  const stop = (_e, cx) => cx.stop_propagation();
+
+  // caption: the place's name; click for the next place, right-click for the previous one
+  stage.child(div().id("place-caption").absolute().left(ox + 6).top(oy + place.h - 26).h(20).px(6).flex().items_center()
+    .bg("#000000a0").text_size(12).text_color("#ffffff").cursor_pointer()
+    .tooltip("Click: next place · right-click: previous place")
+    .on_mouse_down("left", stop)
+    .on_mouse_down("right", (_e, cx) => { cx.stop_propagation(); stepPlace(cur.id, -1); })
+    .on_click(() => stepPlace(cur.id, 1))
+    .child(place.name));
 
   // click areas: a Pokémon focuses its pane
-  const stop = (_e, cx) => cx.stop_propagation();
   for (const it of items) {
     const { a } = it;
     const m = monsterOf(mids.get(a.address));

@@ -4,3 +4,4 @@ art/samples/*
 !art/samples/assets-check.png
 mods/pokemon/jsconfig.json
 mods/pokemon/*.d.ts
+art/animated/
