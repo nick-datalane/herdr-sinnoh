@@ -28,16 +28,20 @@ ANIM = {
     "verity":      {"water": (60, 20, 120)},
     "acuity":      {"water": (60, 20, 120)},
     "floaroma":    {"flowers": True},
-    "eterna":      {},
+    # the tall grass rustles one tile at a time, in turn at a few spots, as when something moves through it
+    "eterna":      {"rustle": 5},
     "sunyshore":   {"water": (70, 30, 140)},
-    "snowpoint":   {},
+    "snowpoint":   {"snow": True},
     "valor-beach": {"water": (70, 25, 130)},
     # the waterfall is cut out of the pool above it, so each scrolls with its own texture
     "league":      {"water": (50, 15, 120), "split": [[111, 229, 176, 142]]},
-    "resort":      {"water": (60, 20, 120)},
+    # the hot-spring pools are teal, not blue: found by their own rule (g - r, |g - b|, g); no flowers (the rule
+    # takes the white fence posts for blooms)
+    "resort":      {"water": (60, 20, 120), "glint": True, "pools": (35, 20, 150)},
     "paradise":    {"water": (60, 20, 120), "flowers": True},
-    "twinleaf":    {"water": (60, 20, 120)},
-    "hearthome":   {},   # the fountain bowls are too small: scrolling them only smears the rim shading
+    "twinleaf":    {"water": (60, 20, 120), "glint": True},
+    # the fountain bowls are too small to scroll (it only smears the rim shading): their rings are redrawn, flowing out
+    "hearthome":   {"fountains": True},
 }
 MIN_WATER_PX = 300      # drop blue specks (signs, roofs, pokéballs) smaller than this, in map pixels
 MAX_BLOOM_PX = 120      # a bloom cluster is small; roofs, fences, paths and people are bigger or longer
@@ -59,6 +63,22 @@ def water_mask(a, cfg):
     keep = np.zeros(n + 1, bool)
     keep[1:] = sizes >= MIN_WATER_PX
     return keep[lab]
+
+def pool_mask(a, cfg):
+    """Teal water (a hot spring): green and blue alike, both well above red."""
+    gr, gb, gmin = cfg
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    m = (g - r > gr) & (np.abs(g - b) < gb) & (g > gmin)
+    m = ndimage.binary_fill_holes(ndimage.binary_closing(m, iterations=1))
+    lab, n = ndimage.label(m)
+    out = []
+    for i in range(1, n + 1):
+        cm = lab == i
+        if cm.sum() >= MIN_WATER_PX:
+            q = (a[cm] // 8).astype(np.int32)
+            _, inv, cnt = np.unique(q, axis=0, return_inverse=True, return_counts=True)
+            out.append(dict(mask=cm, size=int(cm.sum()), base=a[cm][inv == int(np.argmax(cnt))].mean(0)))
+    return out
 
 def is_grass(a):
     r, g, b = a[..., 0], a[..., 1], a[..., 2]
@@ -99,7 +119,7 @@ def bodies(a, m, split=()):
         cut = np.zeros_like(m); cut[y:y + h, x:x + w] = True
         pieces.append(m & cut); rest &= ~cut
     pieces.append(rest)
-    out = []
+    out, flat = [], []
     for piece in pieces:
         lab, n = ndimage.label(piece)
         for i in range(1, n + 1):
@@ -123,6 +143,7 @@ def bodies(a, m, split=()):
                 _, inv, cnt = np.unique(q, axis=0, return_inverse=True, return_counts=True)
                 base = a[interior][inv == int(np.argmax(cnt))].mean(0)
                 if near(a[interior], base, 14).mean() > 0.92:
+                    flat.append(dict(mask=cm, size=int(cm.sum()), base=base))
                     continue
             # a pixel moves when the one a period below or above it is the same colour (and in the body)
             down = np.zeros_like(cm); down[:-P] = cm[P:] & near(a[:-P], a[P:])
@@ -131,7 +152,7 @@ def bodies(a, m, split=()):
             still = ndimage.binary_opening(still, structure=np.ones((3, 3)))   # not lone noisy pixels
             out.append(dict(mask=cm & ~still, size=int(cm.sum()), period=P, score=score, still=int(still.sum())))
     out.sort(key=lambda b: -b["size"])
-    return out
+    return out, flat
 
 def loop_length(bod):
     """The loop length and each body's step (px per frame). First choice: the shortest loop of at most MAX_FRAMES
@@ -175,43 +196,219 @@ def ground_fill(a, blooms):
     idx = ndimage.distance_transform_edt(blooms, return_distances=False, return_indices=True)
     return a[idx[0], idx[1]]
 
-def sway_flowers(a, blooms, ground, dx):
-    if dx == 0:
+def sway(a, mask, ground, dx, land):
+    """Lift the mask's pixels off (the ground shows), set them down dx pixels over (a number, or an array per pixel),
+    only where they land on `land` or on the mask itself, never on a path or a wall."""
+    dx = np.broadcast_to(np.asarray(dx), mask.shape)
+    mv = mask & (dx != 0)
+    if not mv.any():
         return a
     out = a.copy()
-    out[blooms] = ground[blooms]
-    ys, xs = np.nonzero(blooms)
-    nx = xs + dx
+    out[mv] = ground[mv]
+    ys, xs = np.nonzero(mv)
+    nx = xs + dx[ys, xs]
     ok = (nx >= 0) & (nx < a.shape[1])
     ys, xs, nx = ys[ok], xs[ok], nx[ok]
-    # land only on grass or on another bloom, never on a path or a wall
-    land = blooms[ys, nx] | is_grass(a)[ys, nx]
-    out[ys[land], nx[land]] = a[ys[land], xs[land]]
+    ok = mask[ys, nx] | land[ys, nx]
+    out[ys[ok], nx[ok]] = a[ys[ok], xs[ok]]
     return out
+
+def sway_flowers(a, blooms, ground, dx):
+    return sway(a, blooms, ground, dx, is_grass(a))
+
+# ---- effects drawn on top (snow, glints, fountain rings, grass rustles): each loops over the frame count it is given ----
+
+def rng(p):
+    return np.random.default_rng(sum(map(ord, p["id"])))   # the same scene gives the same GIF on every build
+
+SNOW = [  # (size in map px, rows per frame, flakes per 1000 px², colour): far flakes small and slow, near ones big
+    (1, 1, 4.0, (228, 234, 248)),
+    (2, 2, 1.8, (255, 255, 255)),
+    (2, 3, 1.0, (255, 255, 255)),
+]
+SNOW_EDGE = (150, 165, 195)   # a 2 px flake's lower right edge, so it shows against snow
+
+def snow_layers(r, h, w, n):
+    """Each layer is a tile of n*speed rows (one loop moves it exactly one tile down), so the snowfall is seamless;
+    the tiles of the three layers differ in height, so the repeat doesn't show."""
+    out = []
+    for size, v, dens, col in SNOW:
+        th = n * v
+        cnt = max(1, int(dens * th * w / 1000))
+        out.append(dict(size=size, v=v, th=th, col=np.array(col), x=r.integers(0, w, cnt), y=r.integers(0, th, cnt),
+                        ph=r.uniform(0, 2 * np.pi, cnt), amp=r.choice([0, 1, 1, 2], cnt) if size > 1 or v > 1 else np.zeros(cnt, int)))
+    return out
+
+def draw_snow(f, layers, k, n):
+    h, w = f.shape[:2]
+    for L in layers:
+        y0 = (L["y"] + k * L["v"]) % L["th"]
+        x = (L["x"] + np.round(L["amp"] * np.sin(2 * np.pi * k / n + L["ph"])).astype(int)) % w
+        for rep in range(0, h + L["th"], L["th"]):
+            y = y0 + rep - L["th"]
+            if L["size"] > 1:   # the edge first, then the flake over it: an L of shade below and to the right
+                for dy, dx in ((2, 1), (2, 2), (1, 2)):
+                    yy, xx = y + dy, (x + dx) % w
+                    ok = (yy >= 0) & (yy < h)
+                    f[yy[ok], xx[ok]] = SNOW_EDGE
+            for dy in range(L["size"]):
+                for dx in range(L["size"]):
+                    yy, xx = y + dy, (x + dx) % w
+                    ok = (yy >= 0) & (yy < h)
+                    f[yy[ok], xx[ok]] = L["col"]
+    return f
+
+GLINT = [  # a glint's life in frames: a dot, a small cross, a dot, gone
+    [(0, 0)],
+    [(0, 0), (0, -1), (0, 1), (-1, 0), (1, 0)],
+    [(0, 0)],
+]
+GLINT_PX = 350          # one glint at a time per this many map px of flat water
+
+def glints(r, flat, n):
+    out = []
+    for b in flat:
+        inner = ndimage.binary_erosion(b["mask"], iterations=3)
+        ys, xs = np.nonzero(inner)
+        if not len(ys):
+            continue
+        col = np.minimum(255, b["base"] + (255 - b["base"]) * 0.75)
+        lives = max(1, b["size"] // GLINT_PX) * n // (len(GLINT) + 2)
+        for i in range(lives):
+            j = r.integers(len(ys))
+            out.append((ys[j], xs[j], int(r.integers(n)), col))
+    return out
+
+def draw_glints(f, gl, k, n):
+    h, w = f.shape[:2]
+    for y, x, ph, col in gl:
+        t = (k - ph) % n
+        if t < len(GLINT):
+            for dy, dx in GLINT[t]:
+                if 0 <= y + dy < h and 0 <= x + dx < w:
+                    f[y + dy, x + dx] = col
+    return f
+
+RING_GAP = 8            # map px between the rings that flow down a fountain's tiers, one px per frame
+
+def fountains(a):
+    """Every fountain: the pale cyan water and its white rings, and where the jet tops out."""
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    cyan = (g > 185) & (b > 170) & (g - r > 40)
+    white = (a.min(-1) > 205) & (b >= r)
+    lab, n = ndimage.label(ndimage.binary_closing(cyan, iterations=1))
+    out = []
+    for i, sl in enumerate(ndimage.find_objects(lab), 1):
+        m = ndimage.binary_fill_holes(lab == i)
+        if m.sum() < 400:
+            continue
+        m = ndimage.binary_fill_holes(m | (white & ndimage.binary_dilation(m, iterations=2)))
+        ys, xs = np.nonzero(m)
+        top = ys.min()
+        cx = xs[ys < top + 4].mean()
+        rings = m & white
+        water = m & ~rings
+        out.append(dict(mask=m, rings=rings, water=water, top=top, cx=cx,
+                        light=np.median(a[rings], 0) if rings.any() else np.array([228, 246, 246]),
+                        fill=ground_fill(a, rings)))
+    return out
+
+def draw_fountains(f, a, fts, k):
+    for ft in fts:
+        m = ft["mask"]
+        ys, xs = np.nonzero(m)
+        f[ft["rings"]] = ft["fill"][ft["rings"]]
+        # the rings bow up at the sides like the tiers do; they flow down from the jet and wrap every RING_GAP
+        d = (ys - ft["top"]) - 0.35 * np.abs(xs - ft["cx"]) - k
+        ph = np.floor(d) % RING_GAP
+        lit = (ph == 0) & (ys > ft["top"] + 3)
+        half = (ph == 1) & (ys > ft["top"] + 3)
+        f[ys[lit], xs[lit]] = ft["light"]
+        f[ys[half], xs[half]] = (f[ys[half], xs[half]] + ft["light"]) // 2
+    return f
+
+TILE = 16               # the DS map tile, in map px
+RUSTLE = [2, -2]        # a tuft's shake: two pixels over, two back past centre, then still
+RUSTLE_MS = 110
+RUSTLE_REST_MS = 900    # still between one tile's rustle and the next
+
+def tall_grass(a):
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    return (g - r > 60) & (b < 75) & (g < 215) & (g > 90)
+
+def rustle_tiles(a, r, count):
+    """`count` tall grass tiles, spread over the scene. The tile grid is found as the offset with the most tiles that
+    are nearly all grass (a misaligned grid cuts every tuft); tiles are picked far from each other (each next one
+    the farthest from those picked)."""
+    m = tall_grass(a)
+    h, w = m.shape
+    best = None
+    for oy in range(TILE):
+        for ox in range(TILE):
+            cov = [m[y:y + TILE, x:x + TILE].mean() for y in range(oy, h - TILE + 1, TILE) for x in range(ox, w - TILE + 1, TILE)]
+            sc = sum(c for c in cov if c > 0.5)
+            if best is None or sc > best[0]:
+                best = (sc, ox, oy)
+    _, ox, oy = best
+    full = [(y, x) for y in range(oy, h - TILE + 1, TILE) for x in range(ox, w - TILE + 1, TILE)
+            if m[y:y + TILE, x:x + TILE].mean() > 0.45]
+    if not full:
+        return [], m
+    pick = [full[int(r.integers(len(full)))]]
+    while len(pick) < min(count, len(full)):
+        d = [min(abs(y - py) + abs(x - px) for py, px in pick) for y, x in full]
+        pick.append(full[int(np.argmax(d))])
+    # a tuft is shorter than a tile (two rows of them per tile, with a gap): rustle the one tuft at the tile's
+    # middle, the rows between the gaps above and below it, so no tuft is ever cut in half
+    out = []
+    for ty, tx in pick:
+        col = m[:, tx:tx + TILE].mean(1)
+        y0 = y1 = ty + TILE // 2
+        while y0 > 0 and col[y0 - 1] > 0.15:
+            y0 -= 1
+        while y1 < h - 1 and col[y1 + 1] > 0.15:
+            y1 += 1
+        out.append((y0, min(y1 + 1, y0 + 2 * TILE), tx, tx + TILE))
+    return out, m
 
 def to2x(arr):
     return Image.fromarray(arr.astype(np.uint8)).resize((arr.shape[1] * 2, arr.shape[0] * 2), Image.NEAREST)
 
 def build(p, cfg, out=OUT):
     a = load(p)
-    w = water_mask(a, cfg["water"]) if cfg.get("water") else None
+    h, w = a.shape[:2]
+    r = rng(p)
+    wm = water_mask(a, cfg["water"]) if cfg.get("water") else None
+    if wm is not None and wm.sum() < MIN_WATER_PX:
+        wm = None
     fl = bloom_mask(a) if cfg.get("flowers") else None
-    if w is not None and w.sum() < MIN_WATER_PX:
-        w = None
     if fl is not None and fl.sum() < 20:
         fl = None
-    if w is None and fl is None:
-        return None
-    bod = bodies(a, w, cfg.get("split", ())) if w is not None else []
-    if not bod and fl is None:
+    bod, flat = bodies(a, wm, cfg.get("split", ())) if wm is not None else ([], [])
+    if cfg.get("pools"):
+        flat = flat + pool_mask(a, cfg["pools"])
+    gl_on = cfg.get("glint") and flat
+    fts = fountains(a) if cfg.get("fountains") else []
+    tiles = []
+    if cfg.get("rustle"):
+        tiles, grass = rustle_tiles(a, r, cfg["rustle"])
+    if not (bod or fl is not None or gl_on or fts or cfg.get("snow") or tiles):
         return None
     if bod:
         n, speeds = loop_length(bod)
+    elif tiles:
+        n, speeds = len(tiles) * (len(RUSTLE) + 1), []
     else:
         n, speeds = FLOWER_FRAMES, []
     ms = FRAME_MS + 30 if 2 in speeds else FRAME_MS   # bodies at 2 px per frame get a little longer per frame
+    durations = [ms] * n
     hold = max(1, n // len(SWAY))
     ground = ground_fill(a, fl) if fl is not None else None
+    snow = snow_layers(r, h, w, n) if cfg.get("snow") else None
+    gl = glints(r, flat, n) if gl_on else []
+    if tiles:
+        g_ground = ground_fill(a, grass)
+        durations = ([RUSTLE_MS] * len(RUSTLE) + [RUSTLE_REST_MS]) * len(tiles)
     frames = []
     for k in range(n):
         f = a.copy()
@@ -219,16 +416,32 @@ def build(p, cfg, out=OUT):
             scroll_body(f, a, b["mask"], k * sp, b["period"])
         if fl is not None:
             f = sway_flowers(f, fl, ground, SWAY[(k // hold) % len(SWAY)])
+        if gl:
+            f = draw_glints(f, gl, k, n)
+        if fts:
+            f = draw_fountains(f, a, fts, k)
+        if tiles and k % (len(RUSTLE) + 1) < len(RUSTLE):
+            y0, y1, x0, x1 = tiles[k // (len(RUSTLE) + 1)]
+            dx = np.zeros((h, w), int)
+            dx[y0:y1, x0:x1] = RUSTLE[k % (len(RUSTLE) + 1)]
+            f = sway(f, grass, g_ground, dx, is_grass(a))
+        if snow:
+            f = draw_snow(f, snow, k, n)
         frames.append(to2x(f))
-    # one palette for every frame (scrolling and swaying add no colours), no dither: pixel art stays crisp
-    pal = frames[0].quantize(256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    # one palette for every frame, built from all of them (snow and glints add colours frame 0 lacks); no dither
+    strip = Image.new("RGB", (frames[0].width, frames[0].height * len(frames)))
+    for i, fr in enumerate(frames):
+        strip.paste(fr, (0, i * fr.height))
+    pal = strip.quantize(256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
     q = [f.quantize(palette=pal, dither=Image.Dither.NONE) for f in frames]
     os.makedirs(out, exist_ok=True)
     path = os.path.join(out, f"{p['id']}.gif")
-    q[0].save(path, save_all=True, append_images=q[1:], loop=0, duration=ms, disposal=1, optimize=False)
-    return dict(path=path, frames=n, ms=ms, water=int(w.sum()) if w is not None else 0,
+    q[0].save(path, save_all=True, append_images=q[1:], loop=0, duration=durations, disposal=1, optimize=False)
+    fx = [k for k in ("snow", "glint", "fountains", "rustle") if cfg.get(k)]
+    return dict(path=path, frames=n, ms=ms, water=int(wm.sum()) if wm is not None else 0,
                 bodies=[(b["size"], b["period"], sp, round(b["score"], 2), b["still"]) for b, sp in zip(bod[:4], speeds)],
-                blooms=int(fl.sum()) if fl is not None else 0, bytes=os.path.getsize(path))
+                blooms=int(fl.sum()) if fl is not None else 0, bytes=os.path.getsize(path),
+                fx=fx, glints=len(gl), fountains=len(fts))
 
 def mask_sheet(places):
     W, H, cols = 400, 480, 4
@@ -243,21 +456,39 @@ def mask_sheet(places):
         if cfg.get("flowers"):
             b = bloom_mask(a)
             show[b] = [255, 60, 200]
+        if cfg.get("pools"):
+            for b in pool_mask(a, cfg["pools"]):
+                show[b["mask"]] = [0, 230, 160]
+        if cfg.get("fountains"):
+            for ft in fountains(a):
+                show[ft["water"]] = [40, 220, 220]; show[ft["rings"]] = [255, 255, 255]
+        if cfg.get("rustle"):
+            show[tall_grass(a)] = [255, 200, 0]
+            for y0, y1, x0, x1 in rustle_tiles(a, rng(p), cfg["rustle"])[0]:
+                show[y0:y1, x0:x1] = [255, 40, 40]
         im = Image.fromarray(show.astype(np.uint8))
         sheet.paste(im, ((i % cols) * W + (W - im.width) // 2, (i // cols) * H + (H - im.height) // 2))
     path = os.path.join(OUT, "masks.png")
     sheet.save(path)
     return path
 
-def preview(places):
-    """art/animated/preview.html: every GIF at 1x, for a look in a browser (Preview.app shows GIF frames as pages)."""
-    cards = "\n".join(f'<figure><img src="{p["id"]}.gif" width="{p["crop"][2]}"><figcaption>{p["name"]}</figcaption></figure>'
-                      for p in places if os.path.exists(os.path.join(OUT, f"{p['id']}.gif")))
+def preview(places, only=()):
+    """art/animated/preview.html: every GIF next to its still scene, both at the size Herdr shows them on a Retina
+    screen (Preview.app shows GIF frames as pages, so use a browser). Given place ids, only those."""
+    still = os.path.join(ART, "..", "mods", "pokemon", "assets", "day", "places")
+    cards = []
+    for p in places:
+        if (only and p["id"] not in only) or not os.path.exists(os.path.join(OUT, f"{p['id']}.gif")):
+            continue
+        w = p["crop"][2]
+        cards.append(f'<section><h2>{p["name"]}</h2><div><figure><img src="{p["id"]}.gif" width="{w}"><figcaption>animated</figcaption></figure>'
+                     f'<figure><img src="{os.path.relpath(still, OUT)}/{p["id"]}.png" width="{w}"><figcaption>still</figcaption></figure></div></section>')
     with open(os.path.join(OUT, "preview.html"), "w", encoding="utf-8") as f:
         f.write(f"""<!doctype html><meta charset="utf-8"><title>Sinnoh scenes, animated</title>
-<style>body{{background:#1d1d1d;color:#ddd;font:14px system-ui;margin:16px}}main{{display:flex;flex-wrap:wrap;gap:16px}}
-figure{{margin:0}}img{{image-rendering:pixelated;display:block;background:#000}}figcaption{{padding:4px 0}}</style>
-<h1 style="font-size:16px">Sinnoh scenes, animated (art/animated/*.gif, shown at 1x)</h1><main>{cards}</main>""")
+<style>body{{background:#1d1d1d;color:#ddd;font:14px system-ui;margin:16px}}main{{display:flex;flex-wrap:wrap;gap:32px}}
+section div{{display:flex;gap:8px}}h2{{font-size:14px;margin:0 0 6px}}figure{{margin:0}}
+img{{image-rendering:pixelated;display:block;background:#000}}figcaption{{padding:4px 0;color:#999}}</style>
+<h1 style="font-size:16px">Sinnoh scenes, animated next to still</h1><main>{"".join(cards)}</main>""")
 
 def main(argv):
     places = json.load(open(os.path.join(ART, "places.json"), encoding="utf-8"))
@@ -276,8 +507,9 @@ def main(argv):
             print(f"{p['id']:12} nothing to animate")
         else:
             print(f"{p['id']:12} {r['frames']:2d} frames @{r['ms']}ms  water {r['water']:6d}px  blooms {r['blooms']:5d}px  "
-                  f"{r['bytes']/1024:6.0f} KB  bodies(size, period, speed, score, still) {r['bodies']}")
-    preview(places)
+                  f"{r['bytes']/1024:6.0f} KB  bodies(size, period, speed, score, still) {r['bodies']}"
+                  + (f"  fx {r['fx']} glints {r['glints']} fountains {r['fountains']}" if r['fx'] else ""))
+    preview(places, only)
 
 if __name__ == "__main__":
     main(sys.argv[1:])

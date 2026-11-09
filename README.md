@@ -33,7 +33,7 @@ herdr-app do layout.switch '{"name":"pokemon"}'
 ## What you get
 
 - **Twelve places**, random per space: Lake Verity, Lake Acuity, Floaroma Meadow, Eterna Forest, Sunyshore City, Snowpoint City, Valor Lakefront, the Pokémon League, the Resort Area, Flower Paradise, Twinleaf Town and Hearthome City. A space keeps its place until it closes.
-- **The scenes move a little**, as on the DS: lake and sea water drifts, the League's waterfall flows and the flowers of Floaroma and Flower Paradise sway. Seven places are animated (Verity, Acuity, Sunyshore, Valor Lakefront, the League, Floaroma, Flower Paradise); the other five have nothing that moves (flat ponds stay still). They are GIFs built from the same maps.
+- **The scenes move a little**, as on the DS: lake and sea water drifts, the League's waterfall flows, the flowers of Floaroma and Flower Paradise sway, snow falls on Snowpoint, Hearthome's fountains run, the ponds of Twinleaf and the Resort (and its hot springs) glint, and Eterna's tall grass rustles one clump at a time. All twelve places are animated GIFs built from the same maps.
 - **Pick a scene**: click the place name in the scene for the next place, right-click for the previous one. Or label any terminal of the space with a place id or name, `hc label t4 place=verity`, which an agent can do for you. The choice is kept with the space.
 - **All 493 Pokémon**, random per agent, with their Platinum battle sprites. An agent keeps its Pokémon until it goes away. To pick one by hand, label the agent's terminal with a name or Dex number, `hc label t4 pokemon=piplup`; the label stays with the terminal, so the choice survives restarts.
 - **Status without noise**: working = music notes, done = sparkles and "!!", blocked = "?", resting = slowly drifting Zs. Nothing shakes.
@@ -70,8 +70,12 @@ Every scene is a window cut from a real DS overworld map, with four spots where 
    - `"water": (b−r, b−g, min b)`: how blue a pixel must be to count as water. `(60, 20, 120)` fits lakes and ponds, `(70, 30, 140)` the sea. Specks smaller than 300 px are ignored. The water's texture scrolls down and wraps over its own repeat; flat water (a pond with a shaded rim and no texture) is left still by itself.
    - `"split": [[x, y, w, h]]`: rectangles that cut a body with a texture of its own, such as a waterfall, out of the water around it, so each scrolls at its own repeat. Pixels that don't repeat (a crest, foam along a shore) stay still.
    - `"flowers": true`: small bright patches on grass are blooms and rock one pixel left and right.
+   - `"glint": true`: flat water (a pond: one colour, nothing to scroll) gets small sparkles that come and go. `"pools": [g-r, |g-b|, min g]` adds teal water (hot springs) the blue rule misses.
+   - `"fountains": true`: pale cyan fountains get rings that flow down their tiers from the jet.
+   - `"snow": true`: snow falls over the whole scene, in three layers.
+   - `"rustle": 5`: that many tall grass clumps, spread over the scene, shake two pixels in turn, with a pause between.
 
-   Check what got caught: `python3 art/animate.py --masks` writes `art/animated/masks.png` (water in blue, blooms in magenta), and `python3 art/animate.py <id>` writes `art/animated/<id>.gif` plus `preview.html` for a look in a browser. Loops stay within 16 frames, since Herdr keeps every decoded frame of a shown GIF in memory (about 8 MB each).
+   Check what got caught: `python3 art/animate.py --masks` writes `art/animated/masks.png` (water in blue, blooms in magenta, pools in green, fountains in cyan, tall grass in yellow with the rustling clumps in red), and `python3 art/animate.py <id>` writes `art/animated/<id>.gif` plus `preview.html`, each GIF next to its still scene, for a look in a browser. Loops stay within 16 frames, since Herdr keeps every decoded frame of a shown GIF in memory (about 8 MB each).
 5. **Build.** `python3 art/build_assets.py` (needs numpy, Pillow and scipy; on a Mac whose Python can't see them under `-I`, run it plainly). It cuts the scene, builds the GIF, makes the 64 px thumb for the cards, rewrites `manifest.js` and checks every file. Look at `art/samples/assets-check.png`: every scene with Pokémon on its stands.
 6. **Install.** `./install.sh`, or copy `mods/pokemon/assets/` and `mods/pokemon/manifest.js` into `~/.config/herdr-app/mods/pokemon/`; Herdr reloads the mod on save. New spaces may now draw the place; to see it at once, click the place name in the scene until it comes up, or `hc label <a terminal of the space> place=<id>`.
 

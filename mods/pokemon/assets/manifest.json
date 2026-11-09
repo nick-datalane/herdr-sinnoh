@@ -116,7 +116,9 @@
      "x": 240,
      "y": 410
     }
-   ]
+   ],
+   "anim": "places/eterna.gif",
+   "frames": 15
   },
   {
    "id": "sunyshore",
@@ -172,7 +174,9 @@
      "x": 305,
      "y": 400
     }
-   ]
+   ],
+   "anim": "places/snowpoint.gif",
+   "frames": 16
   },
   {
    "id": "valor-beach",
@@ -257,7 +261,9 @@
      "x": 300,
      "y": 345
     }
-   ]
+   ],
+   "anim": "places/resort.gif",
+   "frames": 16
   },
   {
    "id": "paradise",
@@ -313,7 +319,9 @@
      "x": 290,
      "y": 325
     }
-   ]
+   ],
+   "anim": "places/twinleaf.gif",
+   "frames": 16
   },
   {
    "id": "hearthome",
@@ -340,7 +348,9 @@
      "x": 210,
      "y": 390
     }
-   ]
+   ],
+   "anim": "places/hearthome.gif",
+   "frames": 16
   }
  ],
  "monsters": [
