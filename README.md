@@ -38,6 +38,7 @@ herdr-app do layout.switch '{"name":"pokemon"}'
 - **All 493 Pokémon**, random per agent, with their Platinum battle sprites. An agent keeps its Pokémon until it goes away. To pick one by hand, label the agent's terminal with a name or Dex number, `hc label t4 pokemon=piplup`; the label stays with the terminal, so the choice survives restarts.
 - **Status without noise**: working = music notes, done = sparkles and "!!", blocked = "?", resting = slowly drifting Zs. Nothing shakes.
 - **Pokédex cards** (or small photos: the toggle in the header) with the Dex number, the app, the tab, the task, a timer, the place and a score.
+- **The PC Box**, a file tree: the Poké Ball button at the top right opens the focused pane's folder. Every folder is a Poké Ball, a different one at each level (Poké, Great, Ultra, Master, Premier and on through the Platinum balls), shut when collapsed and popped open when expanded; click to open or close, **Close all** to fold everything. Files are items by type: TMs for code (a colour per language), mail for writing, the town map for a README, the photo album for pictures. Changed files carry NEW / EDIT / GONE tags and folders holding changes a dot. Click a file to read it.
 - **Battle-line news** for agents finishing in the background: "Giratina used Shadow Force! Defeated: migrate the schema". Click it to jump there.
 
 ## Uninstall

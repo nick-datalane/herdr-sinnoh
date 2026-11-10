@@ -89,7 +89,7 @@ export function top(view, t) {
     .border_color(on ? t.input : t.chrome)
     .hover((st) => st.bg(t.hover).text_color(t.foreground))
     .tooltip(tip).on_mouse_down("left", stop).on_click(action)
-    .child(svg(icon).size(16));
+    .child(icon.endsWith(".png") ? image(icon).size(20) : svg(icon).size(16));
 
   const root = layout();
   const panel = find(root, "panel");
@@ -112,6 +112,6 @@ export function top(view, t) {
       .child(iconButton("kj-tab-new", "mods/workspace-chrome/plus.svg", "New tab", false,
         () => openOverlay({ mod: "new-menu", kind: "popup", width: 250, height: 512 }))))
     .child(h_flex().absolute().right(12).top(0).bottom(0).gap(4).items_center()
-      .when(enabled.includes("files"), (el) => el.child(panelButton("files", "mods/files/file.svg", "Files")))
+      .when(enabled.includes("files"), (el) => el.child(panelButton("files", asset(t, "items/poke-ball.png"), "PC Box (files)")))
       .when(enabled.includes("changes"), (el) => el.child(panelButton("changes", "mods/changes/changes.svg", "Changes"))));
 }

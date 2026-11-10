@@ -271,6 +271,54 @@ def build_fx(mode, manifest):
         manifest["fx"] = {k: f"fx/{k}.png" for k in sizes}
         manifest["fxSize"] = sizes      # logical [w, h]
 
+# ---------- the file tree's icons ----------
+# Platinum item sprites from PokeAPI (art/sprites-gen4/items/, 30×30 or 24×24). Folders are Poké Balls, a different
+# ball at each depth (BALLS, cycled), closed when collapsed and open (lid up, light inside) when expanded; files
+# are items by type (the mapping is in mods/pokemon/files.js). Every icon is 22×22 art px, exported 2×.
+BALLS = ["poke-ball", "great-ball", "ultra-ball", "master-ball", "premier-ball", "luxury-ball", "dive-ball", "net-ball",
+         "nest-ball", "repeat-ball", "timer-ball", "dusk-ball", "heal-ball", "quick-ball", "safari-ball", "cherish-ball"]
+ITEM = 22
+BALL_EDGE = (74, 82, 82, 255)
+GLOW = [(255, 200, 60), (255, 226, 110), (255, 242, 170), (255, 252, 225)]   # top to bottom, inside an open ball
+
+def ball_icon(name, opened):
+    a = np.asarray(Image.open(f"{ART}/sprites-gen4/items/{name}.png").convert("RGBA")).copy()
+    # every ball sprite: 18 px round at (6, 6) in 30×30, its seam (the dark band) on rows 17–18: the lid is above
+    if not opened:
+        return a[2:2 + ITEM, 4:4 + ITEM]
+    out = np.zeros_like(a)
+    out[17:] = a[17:]
+    row = np.nonzero(a[17, :, 3])[0]
+    x0, x1 = row.min(), row.max() + 1
+    for k, c in enumerate(GLOW):            # an outlined bowl of light where the lid was
+        y = 13 + k
+        out[y, x0 + 1:x1 - 1] = c + (255,)
+        out[y, x0] = out[y, x1 - 1] = BALL_EDGE
+    ys, xs = np.nonzero(a[:17, :, 3] > 0)   # the lid, 4 px up; its bottom row darkened into a rim
+    out[ys - 4, xs] = a[ys, xs]
+    b = ys.max()
+    out[b - 4, xs[ys == b]] = BALL_EDGE
+    return out[2:2 + ITEM, 4:4 + ITEM]
+
+def item_icon(name):
+    a = np.asarray(Image.open(f"{ART}/sprites-gen4/items/{name}.png").convert("RGBA"))
+    x0, y0, x1, y1 = bbox(a)
+    a = a[y0:y1, x0:x1]
+    out = np.zeros((ITEM, ITEM, 4), np.uint8)
+    h, w = min(a.shape[0], ITEM), min(a.shape[1], ITEM)
+    oy, ox = (ITEM - h) // 2, (ITEM - w) // 2
+    out[oy:oy + h, ox:ox + w] = a[:h, :w]
+    return out
+
+def build_items(manifest):
+    files = sorted(f[:-4] for f in os.listdir(f"{ART}/sprites-gen4/items") if f.endswith(".png") and f[:-4] not in BALLS)
+    for b in BALLS:
+        save2x(ball_icon(b, False), f"{OUT}/day/items/{b}.png")
+        save2x(ball_icon(b, True), f"{OUT}/day/items/{b}-open.png")
+    for f in files:
+        save2x(item_icon(f), f"{OUT}/day/items/{f}.png")
+    manifest["items"] = {"balls": BALLS, "files": files, "size": ITEM}
+
 # ---------- checks ----------
 def verify(manifest):
     names = []
@@ -280,6 +328,8 @@ def verify(manifest):
     for m in manifest["monsters"]:
         names += [f"monsters/{m['id']}/{f}" for f in set(files["frames"].values()) | {files["head"], files["avatar"], files["face"]}]
     names += list(manifest["fx"].values())
+    it = manifest["items"]
+    names += [f"items/{b}{o}.png" for b in it["balls"] for o in ("", "-open")] + [f"items/{f}.png" for f in it["files"]]
     sizes = {p["image"]: (p["w"] * 2, p["h"] * 2) for p in manifest["places"]}
     sizes.update({p["anim"]: (p["w"] * 2, p["h"] * 2) for p in manifest["places"] if "anim" in p})
     for mode in MODES:
@@ -327,6 +377,7 @@ def main():
     for mode in MODES:
         build_fx(mode, manifest)
     sprites = build_monsters(manifest)
+    build_items(manifest)
     with open(f"{OUT}/manifest.json", "w") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=1)
     with open(os.path.join(ROOT, "mods", "pokemon", "manifest.js"), "w") as f:

@@ -3877,5 +3877,50 @@
   "head": "head.png",
   "avatar": "avatar.png",
   "face": "face.png"
+ },
+ "items": {
+  "balls": [
+   "poke-ball",
+   "great-ball",
+   "ultra-ball",
+   "master-ball",
+   "premier-ball",
+   "luxury-ball",
+   "dive-ball",
+   "net-ball",
+   "nest-ball",
+   "repeat-ball",
+   "timer-ball",
+   "dusk-ball",
+   "heal-ball",
+   "quick-ball",
+   "safari-ball",
+   "cherish-ball"
+  ],
+  "files": [
+   "grass-mail",
+   "journal",
+   "photo-album",
+   "poke-radar",
+   "tm-bug",
+   "tm-dark",
+   "tm-dragon",
+   "tm-electric",
+   "tm-fighting",
+   "tm-fire",
+   "tm-flying",
+   "tm-ghost",
+   "tm-grass",
+   "tm-ground",
+   "tm-ice",
+   "tm-normal",
+   "tm-poison",
+   "tm-psychic",
+   "tm-rock",
+   "tm-steel",
+   "tm-water",
+   "town-map"
+  ],
+  "size": 22
  }
 }

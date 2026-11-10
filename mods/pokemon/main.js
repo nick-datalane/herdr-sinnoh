@@ -4,6 +4,7 @@
 //   roster：the Pokédex cards; a narrow rail when the sidebar is collapsed, see roster.js
 //   top：the space capsule and the tab pills, see top.js
 //   news：the battle-line news card, see news.js (entries come from the watcher in watch.js)
+//   files：the PC Box, a file tree with a Poké Ball per folder, see files.js
 //   pane header: when props carry a pane, see pane.js
 
 import { View, div } from "gpui-kit";
@@ -14,9 +15,11 @@ import { top } from "./top.js";
 import { paneHeader } from "./pane.js";
 import { news } from "./news.js";
 import { startWatch } from "./watch.js";
+import { PCBox } from "./files.js";
 
 export default class Kaiju extends View {
   init(_props, cx) {
+    if (props()?.part === "files") { this.box = new PCBox(); this.box.init(cx); }
     // 只有名册这一份接快捷键命令（keys.json: "cmd-b": "pokemon.toggle"），避免多份抢命令
     if (props()?.part === "roster") {
       startWatch(cx); // the news watcher: one copy, keeps running while the window is hidden
@@ -38,6 +41,7 @@ export default class Kaiju extends View {
     if (part === "roster") return roster(this, t, cx);
     if (part === "top") return top(this, t);
     if (part === "news") return news(this, t, cx);
+    if (part === "files") return this.box.render(cx, t);
     return div();
   }
 }

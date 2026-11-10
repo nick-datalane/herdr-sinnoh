@@ -138,7 +138,10 @@
                       "id": "files",
                       "type": "block",
                       "content": {
-                        "mod": "files"
+                        "mod": "pokemon",
+                        "props": {
+                          "part": "files"
+                        }
                       }
                     },
                     {
